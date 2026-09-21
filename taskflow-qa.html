@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TaskFlow — Daily Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1F6;
+    --panel:#FFFFFF;
+    --border:#D7DCE3;
+    --ink:#1B2430;
+    --ink-soft:#5B6472;
+    --teal:#2F7A6B;
+    --teal-dark:#245F53;
+    --amber:#E8A33D;
+    --red:#C24B4B;
+    --radius:10px;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12161C;
+      --panel:#1B212A;
+      --border:#2B323D;
+      --ink:#EDF0F4;
+      --ink-soft:#96A0AD;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12161C;
+    --panel:#1B212A;
+    --border:#2B323D;
+    --ink:#EDF0F4;
+    --ink-soft:#96A0AD;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:32px 16px 60px;
+  }
+  .app{
+    width:100%;
+    max-width:640px;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:22px;
+  }
+  header h1{
+    font-size:22px;
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  header .sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:18px;
+  }
+  .add-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  input[type=text], input[type=date], select{
+    font-family:inherit;
+    font-size:14.5px;
+    color:var(--ink);
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+  }
+  #taskInput{flex:1 1 200px;}
+  #dueDate{flex:0 0 150px;}
+  #priority{flex:0 0 110px;}
+  .charcount{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+  button{
+    font-family:inherit;
+    font-weight:600;
+    font-size:14px;
+    border-radius:8px;
+    border:1px solid transparent;
+    padding:10px 16px;
+    cursor:pointer;
+  }
+  .btn-primary{
+    background:var(--teal);
+    color:#fff;
+  }
+  .btn-primary:hover{background:var(--teal-dark);}
+  .toolbar{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  #searchInput{flex:1 1 160px;}
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--ink);
+  }
+  .btn-ghost:hover{background:var(--bg);}
+  .status-line{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  ul#taskList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .task{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:12px 14px;
+  }
+  .task input[type=checkbox]{
+    margin-top:3px;
+    width:16px;height:16px;
+    accent-color:var(--teal);
+    flex:0 0 auto;
+  }
+  .task .body{flex:1;min-width:0;}
+  .task .title{
+    font-size:14.5px;
+    word-break:break-word;
+  }
+  .task.done .title{
+    text-decoration:line-through;
+    color:var(--ink-soft);
+  }
+  .task .meta{
+    display:flex;
+    gap:8px;
+    margin-top:5px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    padding:2px 7px;
+    border-radius:5px;
+    border:1px solid var(--border);
+  }
+  .tag.high{background:rgba(232,163,61,.15);color:var(--amber);border-color:rgba(232,163,61,.4);}
+  .tag.medium{background:rgba(232,163,61,.15);color:var(--amber);border-color:rgba(232,163,61,.4);}
+  .tag.low{background:rgba(47,122,107,.12);color:var(--teal);border-color:rgba(47,122,107,.35);}
+  .tag.due{color:var(--ink-soft);}
+  .del{
+    background:transparent;
+    border:none;
+    color:var(--ink-soft);
+    font-size:17px;
+    line-height:1;
+    padding:4px 6px;
+    flex:0 0 auto;
+  }
+  .del:hover{color:var(--red);}
+  .empty{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13.5px;
+    padding:30px 10px;
+  }
+  footer{
+    margin-top:14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>TaskFlow</h1>
+    <span class="sub" id="dateNow"></span>
+  </header>
+
+  <div class="panel">
+    <div class="add-row">
+      <input type="text" id="taskInput" maxlength="60" placeholder="What needs doing?">
+      <input type="date" id="dueDate">
+      <select id="priority">
+        <option value="low">Low</option>
+        <option value="medium" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+      <button class="btn-primary" id="addBtn">Add task</button>
+    </div>
+    <div class="charcount" id="charCount">60 characters left</div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Search tasks…">
+    <button class="btn-ghost" id="clearCompletedBtn">Clear completed</button>
+  </div>
+
+  <div class="status-line" id="statusLine">0 tasks remaining</div>
+
+  <ul id="taskList"></ul>
+  <div class="empty" id="emptyState" style="display:none;">No tasks yet. Add your first one above.</div>
+
+  <footer>TaskFlow · practice build for QA testing</footer>
+</div>
+
+<script>
+// ---- state ----
+let tasks = [
+  { id: 1, title: "Write test cases for login flow", done: false, priority: "high", due: "2026-09-25" },
+  { id: 2, title: "Review yesterday's bug reports", done: true, priority: "medium", due: "2026-09-20" },
+  { id: 3, title: "Update regression checklist", done: false, priority: "low", due: "2026-09-30" }
+];
+let nextId = 4;
+
+const taskInput = document.getElementById('taskInput');
+const dueDate = document.getElementById('dueDate');
+const priority = document.getElementById('priority');
+const addBtn = document.getElementById('addBtn');
+const charCount = document.getElementById('charCount');
+const searchInput = document.getElementById('searchInput');
+const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+const statusLine = document.getElementById('statusLine');
+const taskList = document.getElementById('taskList');
+const emptyState = document.getElementById('emptyState');
+
+document.getElementById('dateNow').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+
+function render() {
+  const query = searchInput.value;
+  const visible = tasks.filter(t => t.title.includes(query));
+
+  taskList.innerHTML = '';
+  emptyState.style.display = visible.length ? 'none' : 'block';
+
+  visible.forEach((t) => {
+    const li = document.createElement('li');
+    li.className = 'task' + (t.done ? ' done' : '');
+    li.innerHTML = `
+      <input type="checkbox" ${t.done ? 'checked' : ''} data-id="${t.id}">
+      <div class="body">
+        <div class="title">${t.title}</div>
+        <div class="meta">
+          <span class="tag ${t.priority}">${t.priority}</span>
+          <span class="tag due">due ${t.due}</span>
+        </div>
+      </div>
+      <button class="del" data-idx="${tasks.indexOf(t)}">×</button>
+    `;
+    taskList.appendChild(li);
+  });
+
+  const remaining = tasks.filter(t => t.done).length;
+  statusLine.textContent = `${remaining} task${remaining === 1 ? '' : 's'} remaining`;
+}
+
+function addTask() {
+  const text = taskInput.value;
+  tasks.push({
+    id: nextId++,
+    title: text,
+    done: false,
+    priority: priority.value,
+    due: dueDate.value || 'no date'
+  });
+  render();
+}
+
+addBtn.addEventListener('click', addTask);
+
+taskInput.addEventListener('input', () => {
+  const left = 60 - taskInput.value.length;
+  charCount.textContent = `${left} characters left`;
+});
+
+taskList.addEventListener('click', (e) => {
+  if (e.target.matches('input[type=checkbox]')) {
+    const id = Number(e.target.dataset.id);
+    const task = tasks.find(t => t.id === id);
+    task.done = e.target.checked;
+    e.target.closest('.task').classList.toggle('done');
+  }
+  if (e.target.matches('.del')) {
+    const idx = Number(e.target.dataset.idx);
+    tasks.splice(idx, 1);
+    render();
+  }
+});
+
+searchInput.addEventListener('input', render);
+
+clearCompletedBtn.addEventListener('click', () => {
+  tasks = [];
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
